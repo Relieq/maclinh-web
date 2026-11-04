@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,8 +7,8 @@
   <meta name="description" content="Mặc Linh — cờ vây 9×9 phong cách thuỷ mặc. Quân cờ tạo được hình đẹp thì thức tỉnh thành Linh, đất vây kín thì hoá thành tranh.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://maclinh.rediov.com/">
-  <meta property="og:title" content="Mặc Linh — Cờ vây có hồn">
-  <meta property="og:description" content="Cờ vây 9×9 phong cách thuỷ mặc. Chơi ngay trên trình duyệt, không cần cài đặt.">
+  <meta property="og:title" content="Mặc Linh — Cờ vây có hồn · Go with a soul">
+  <meta property="og:description" content="Cờ vây phong cách thuỷ mặc, chơi ngay trên trình duyệt. Ink-wash Go in your browser, in Vietnamese or English.">
   <meta property="og:image" content="https://maclinh.rediov.com/og_cover.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -62,7 +62,7 @@ Source SHA-256: 38f4c5f927f746b3dfa4c3a5d7edf0b7a3e828e27438418fa54f9e1565289412
   </section>
   <script>
     (() => {
-      const config = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":8909820,"index.wasm":38451485},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+      const config = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":8944588,"index.wasm":38451485},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
       const threads = false;
       const canvas = document.getElementById('canvas');
       const loading = document.getElementById('loading');
@@ -71,12 +71,25 @@ Source SHA-256: 38f4c5f927f746b3dfa4c3a5d7edf0b7a3e828e27438418fa54f9e1565289412
       const notice = document.getElementById('loading-notice');
       const retry = document.getElementById('loading-retry');
       document.getElementById('game-title').textContent = document.title;
-      // No saved game preference is visible here: follow the browser's preferred language.
-      const zh = false; // Mặc Linh luôn hiển thị tiếng Việt.
-      document.documentElement.lang = 'vi';
-      status.textContent = 'Đang mài mực…';
-      retry.textContent = 'Thử lại';
-      progress.setAttribute('aria-label', 'Tiến độ tải');
+      // Same rule as the game (Loc.system_locale): the language chosen in Settings (mirrored to localStorage
+      // by the game), else Vietnamese when any preferred browser language is Vietnamese or the time zone is Vietnam's.
+      const pickLang = () => {
+        try {
+          const saved = localStorage.getItem('maclinh_lang');
+          if (saved === 'vi' || saved === 'en') return saved;
+        } catch (e) {}
+        const langs = navigator.languages || [navigator.language || ''];
+        if (langs.some((l) => String(l).toLowerCase().startsWith('vi'))) return 'vi';
+        let tz = '';
+        try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+        return tz === 'Asia/Ho_Chi_Minh' || tz === 'Asia/Saigon' ? 'vi' : 'en';
+      };
+      const en = pickLang() === 'en';
+      const T = (vi, enText) => (en ? enText : vi);
+      document.documentElement.lang = en ? 'en' : 'vi';
+      status.textContent = T('Đang mài mực…', 'Grinding the ink…');
+      retry.textContent = T('Thử lại', 'Try again');
+      progress.setAttribute('aria-label', T('Tiến độ tải', 'Loading progress'));
       retry.addEventListener('click', () => window.location.reload());
       let failed = false;
       let ready = false;
@@ -89,8 +102,8 @@ Source SHA-256: 38f4c5f927f746b3dfa4c3a5d7edf0b7a3e828e27438418fa54f9e1565289412
         notice.hidden = false;
         retry.hidden = false;
         const message = performance.now() - lastProgressAt >= 30000
-          ? (zh ? '' : 'Chưa thấy tiến triển mới. Bạn có thể chờ thêm hoặc thử lại.')
-          : (zh ? '' : 'Vẫn đang tải. Bạn có thể chờ thêm hoặc thử lại.');
+          ? T('Chưa thấy tiến triển mới. Bạn có thể chờ thêm hoặc thử lại.', 'No progress for a while. You can keep waiting or try again.')
+          : T('Vẫn đang tải. Bạn có thể chờ thêm hoặc thử lại.', 'Still loading. You can keep waiting or try again.');
         if (notice.textContent !== message) notice.textContent = message;
       };
       const onWindowError = (event) => fail(event.error || new Error('Engine startup error'));
@@ -108,7 +121,7 @@ Source SHA-256: 38f4c5f927f746b3dfa4c3a5d7edf0b7a3e828e27438418fa54f9e1565289412
         stopObserving();
         console.error('[game-loading] Startup failed', error);
         loading.hidden = false;
-        status.textContent = zh ? '' : 'Không tải được ván cờ. Xin thử lại.';
+        status.textContent = T('Không tải được ván cờ. Xin thử lại.', 'Could not load the game. Please try again.');
         progress.hidden = true;
         notice.hidden = true;
         retry.hidden = false;
@@ -130,13 +143,13 @@ Source SHA-256: 38f4c5f927f746b3dfa4c3a5d7edf0b7a3e828e27438418fa54f9e1565289412
         updateNotice();
         if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(current) || current < 0) {
           progress.removeAttribute('value');
-          status.textContent = zh ? '' : 'Đang mài mực…';
+          status.textContent = T('Đang mài mực…', 'Grinding the ink…');
           return;
         }
         progress.max = total;
         progress.value = Math.min(current, total);
         status.textContent = current >= total
-          ? (zh ? '' : 'Đang mở bàn cờ…')
+          ? T('Đang mở bàn cờ…', 'Setting up the board…')
           : `${Math.floor(current / total * 100)}%`;
       };
       const start = async () => {
